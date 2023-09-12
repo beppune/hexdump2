@@ -36,7 +36,7 @@ section .data
 			db 2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh
 			db 2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh
 
-	DumpLin:	db	" 00 00 AA 00 00 00 00 00 00 00 00 00 00 00 00 00 ",0Ah
+	DumpLin:	db	" 00 00 AA 00 AA AA AA AA AA AA AA AA AA AA AA AA ",0Ah
 	DUMPLEN		equ $-DumpLin
 
 	HexStr:	db "0123456789ABCDEF"
@@ -68,7 +68,16 @@ section .text
 
 			ret
 
-
+	DumpAll:
+			mov ecx, 16
+			xor eax, eax
+			mov al, [HexStr + 0]
+			lea esi, [DumpLin - 3]
+	.loop:
+			call DumpChar
+			dec ecx
+			jnz .loop
+			ret
 
 	LoadBuf:
 			push eax
@@ -94,17 +103,7 @@ _start:
 
 	nop
 
-			; MODIFIES: EBX, EDI
-			; IN: 	ECX: Dumplin item_number (index+1)
-			;+		AL: [HexStr + 0] '0' char
-			;+		ESI: DumpLin - 3
-			; ( DumpLin - 3 ) + (item_number * 3) +n (LSN: n==2; MSN: n==1)
-		xor eax, eax
-		mov al, [HexStr + 0]
-		mov ecx, 3
-		lea esi, [DumpLin - 3]
-
-		call DumpChar
+		call DumpAll
 
 		mov eax, 4
 		mov ebx, 1
