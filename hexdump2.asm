@@ -36,7 +36,10 @@ section .data
 			db 2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh
 			db 2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh
 
-	HexStr:	db	" 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
+	DumpLin:	db	" 00 00 AA 00 00 00 00 00 00 00 00 00 00 00 00 00 ",0Ah
+	DUMPLEN		equ $-DumpLin
+
+	HexStr:	db "0123456789ABCDEF"
 
 section .bss
 	BUFFLEN	equ		16
@@ -44,6 +47,28 @@ section .bss
 
 
 section .text
+			; MODIFIES: EBX, EDI
+			; IN: 	ECX: Dumplin item_number (index+1)
+			;+		AL: [HexStr + 0] '0' char
+			;+		ESI: DumpLin - 3
+			; ( DumpLin - 3 ) + (item_number * 3) +n (LSN: n==2; MSN: n==1)
+		DumpChar:
+
+			lea ebx, [ecx * 2]
+			add ebx, ecx
+			; ebx == item_number * 3
+
+			; LSN index
+			lea edi, [esi + ebx + 2]
+			mov byte [edi], al
+
+			; MSB index
+			lea edi, [esi + ebx + 1]
+			mov byte [edi], al
+
+			ret
+
+
 
 	LoadBuf:
 			push eax
@@ -68,13 +93,25 @@ section .text
 _start:
 
 	nop
-		call LoadBuf
+
+			; MODIFIES: EBX, EDI
+			; IN: 	ECX: Dumplin item_number (index+1)
+			;+		AL: [HexStr + 0] '0' char
+			;+		ESI: DumpLin - 3
+			; ( DumpLin - 3 ) + (item_number * 3) +n (LSN: n==2; MSN: n==1)
+		xor eax, eax
+		mov al, [HexStr + 0]
+		mov ecx, 3
+		lea esi, [DumpLin - 3]
+
+		call DumpChar
 
 		mov eax, 4
 		mov ebx, 1
-		mov ecx, Buffer
-		mov edx, ebp
+		mov ecx, DumpLin
+		mov edx, DUMPLEN
 		int 80h
+
 
 Exit:	mov eax, 1		; sys_exit
 		mov ebx, 0		; exit with value 0
