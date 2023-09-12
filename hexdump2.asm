@@ -47,6 +47,10 @@ section .bss
 
 
 section .text
+
+	ScanBuffer:
+
+
 			; MODIFIES: EBX, EDI
 			; IN: 	ECX: Dumplin item_number (index+1)
 			;+		AL: [HexStr + 0] '0' char
@@ -80,10 +84,6 @@ section .text
 			ret
 
 	LoadBuf:
-			push eax
-			push ebx
-			push ecx
-			push edx
 
 			mov eax, 3
 			mov ebx, 0
@@ -91,19 +91,19 @@ section .text
 			mov edx, BUFFLEN
 			int 80h
 
-			mov ebp, eax
-
-			pop edx
-			pop ecx
-			pop ebx
-			pop eax
 			ret
 
 _start:
 
 	nop
 
-		call DumpAll
+		call LoadBuf
+
+		cmp eax, 0
+		jl Exit
+
+		mov ecx, eax
+
 
 		mov eax, 4
 		mov ebx, 1
