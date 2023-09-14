@@ -48,48 +48,40 @@ section .bss
 
 section .text
 
-	ScanBuffer:
-
-
 			; MODIFIES: EBX, EDI
 			; IN: 	ECX: Dumplin item_number (index+1)
 			;+		AL: [HexStr + 0] '0' char
 			;+		ESI: DumpLin - 3
 			; ( DumpLin - 3 ) + (item_number * 3) +n (LSN: n==2; MSN: n==1)
-		DumpChar:
 
-			lea ebx, [ecx * 2]
-			add ebx, ecx
-			; ebx == item_number * 3
 
-			; LSN index
-			lea edi, [esi + ebx + 2]
-			mov byte [edi], al
-
-			; MSB index
-			lea edi, [esi + ebx + 1]
-			mov byte [edi], al
-
-			ret
-
-	DumpAll:
-			mov ecx, 16
-			xor eax, eax
-			mov al, [HexStr + 0]
-			lea esi, [DumpLin - 3]
-	.loop:
-			call DumpChar
-			dec ecx
-			jnz .loop
-			ret
-
+	; LoadBuf:		Fills Buffer from stdin
+	; UPDATED:		14/09/2023
+	; IN:			No input
+	; RETURNS:		# of bytes
+	; MODIFIES:		ECX, EBP, Buffer
+	; CALLS:		sys_write
+	; DESCRIPTION:	Load at most BUFFLEN bytes from stdin to Buffer
+	;				Sets ECX to zero as starting index for Buffer
+	;				Saves # of bytes read into EBP. Caller must
+	;				test ebp value for errors
 	LoadBuf:
+			push eax
+			push ebx
+			pusx edx
 
 			mov eax, 3
 			mov ebx, 0
 			mov ecx, Buffer
 			mov edx, BUFFLEN
 			int 80h
+
+			mov ebp, eax
+			xor ecx, ecx
+
+			pop edx
+			pop ebx
+			pop eax
 
 			ret
 
@@ -99,17 +91,8 @@ _start:
 
 		call LoadBuf
 
-		cmp eax, 0
+		cmp ebp, 0
 		jl Exit
-
-		mov ecx, eax
-
-
-		mov eax, 4
-		mov ebx, 1
-		mov ecx, DumpLin
-		mov edx, DUMPLEN
-		int 80h
 
 
 Exit:	mov eax, 1		; sys_exit
