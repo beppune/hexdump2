@@ -48,11 +48,39 @@ section .bss
 
 section .text
 
-			; MODIFIES: EBX, EDI
-			; IN: 	ECX: Dumplin item_number (index+1)
-			;+		AL: [HexStr + 0] '0' char
-			;+		ESI: DumpLin - 3
-			; ( DumpLin - 3 ) + (item_number * 3) +n (LSN: n==2; MSN: n==1)
+	; DumpByte:		Dump a Byte representation into Dumplin
+	; UPDATED:		14/09/2023
+	; IN:			AL:  byte to represent
+	;				EDI: zero-based address of DumpLin byte represented.
+	; MODIFIES:		DumpLin at given position
+	; DESCRIPTION:	Separate the nybbles at AL and for each nybble
+	;				modify the matching position at DumpLin.
+	;				Caller must provide the elementg address in EDI of DumpLin
+	;				table by the following formula: [DumpLin + index *3]
+	;				EDI + 2 Least Significant Nybble
+	;				EDI + 1 Most Significant Nybble
+	;				Use HexStr as translation table for the nybbles
+	DumpByte:
+
+			push ebx
+			xor ebx, ebx
+
+			mov bl, al
+			and bl, 0Fh
+			mov bl, [HexStr + ebx]
+
+			mov [edi + 2], bl
+
+			mov bl, al
+			shr bl, 1
+			mov bl, [HexStr + ebx]
+
+			mov [edi + 1], bl
+
+			pop ebx
+
+			ret
+
 
 
 	; LoadBuf:		Fills Buffer from stdin
@@ -68,7 +96,7 @@ section .text
 	LoadBuf:
 			push eax
 			push ebx
-			pusx edx
+			push edx
 
 			mov eax, 3
 			mov ebx, 0
@@ -89,10 +117,15 @@ _start:
 
 	nop
 
-		call LoadBuf
+		mov eax, 0
+		lea edi, [DumpLin + 15]
+		call DumpByte
 
-		cmp ebp, 0
-		jl Exit
+		mov eax, 4
+		mov ebx, 1
+		mov ecx, DumpLin
+		mov edx, DUMPLEN
+		int 80h
 
 
 Exit:	mov eax, 1		; sys_exit
