@@ -62,7 +62,6 @@ section .text
 	;				Use HexStr as translation table for the nybbles
 	DumpByte:
 
-			push ebx
 			xor ebx, ebx
 
 			mov bl, al
@@ -72,15 +71,52 @@ section .text
 			mov [edi + 2], bl
 
 			mov bl, al
-			shr bl, 1
+			shr bl, 4
 			mov bl, [HexStr + ebx]
 
 			mov [edi + 1], bl
 
-			pop ebx
-
 			ret
 
+	; DumpAll:		Set to zero representation the whole DumpLin string
+	; UPDATED:		14/09/2023
+	; IN:			None
+	; RETURNS:		Nothing
+	; MODIFIES:		DumpLin
+	; CALL:			DumpChar
+	; DESCRIPTION:	Set each represented byte to 00 into string DumpLin by
+	;				calling DumpChar whith input AL: 0 and ECX from 0 to 15
+	;				in a loop
+	DumpAll:
+			push eax
+			push ebx
+			push ecx
+			push edx
+
+			xor eax, eax
+			xor ebx, ebx
+
+			mov al, 0
+			mov ecx, 0
+
+		.loop:
+			mov edx, ecx
+			shl edx, 1
+			add edx, ecx
+
+			lea edi, [DumpLin + edx]
+
+			call DumpByte
+
+			inc ecx
+			cmp ecx, 16
+			jnz .loop
+
+			pop edx
+			pop ecx
+			pop ebx
+			pop eax
+			ret
 
 
 	; LoadBuf:		Fills Buffer from stdin
@@ -117,9 +153,7 @@ _start:
 
 	nop
 
-		mov eax, 0
-		lea edi, [DumpLin + 15]
-		call DumpByte
+		call DumpAll
 
 		mov eax, 4
 		mov ebx, 1
