@@ -36,8 +36,11 @@ section .data
 			db 2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh
 			db 2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh,2Eh
 
-	DumpLin:	db	" 00 00 AA 00 AA AA AA AA AA AA AA AA AA AA AA AA ",0Ah
+	DumpLin:	db	" 00 00 AA 00 AA AA AA AA AA AA AA AA AA AA AA AA "
 	DUMPLEN		equ $-DumpLin
+	AsciiStr:	db	"|................|",0Ah
+	ASCIILEN	equ $-AsciiStr
+	TOTALLEN	equ $-DumpLin
 
 	HexStr:	db "0123456789ABCDEF"
 
@@ -106,6 +109,14 @@ section .text
 			lea edi, [DumpLin + edx]
 
 			call DumpByte
+
+			;eax is the offset in the DotXlat
+
+			mov al, [DotXlat + eax]
+
+			; [AsciiStr + 1 + ecx is the current position
+			;+ in the string representation
+			mov byte [AsciiStr + 1 +ecx ], al
 
 			inc ecx
 			cmp ecx, esi
@@ -204,7 +215,7 @@ _start:
 		mov eax, 4
 		mov ebx, 1
 		mov ecx, DumpLin
-		mov edx, DUMPLEN
+		mov edx, TOTALLEN
 		int 80h
 
 		jmp _start
