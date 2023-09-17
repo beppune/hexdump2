@@ -49,7 +49,7 @@ section .bss
 section .text
 
 	; DumpByte:		Dump a Byte representation into Dumplin
-	; UPDATED:		14/09/2023
+	; UPDATED:		15/09/2023
 	; IN:			AL:  byte to represent
 	;				EDI: zero-based address of DumpLin byte represented.
 	; MODIFIES:		DumpLin at given position
@@ -77,6 +77,47 @@ section .text
 			mov [edi + 1], bl
 
 			ret
+
+	; ScanBuffer	Scan Buffer and Dump eah read byte into DumpLin
+	; UPDATED:		15/09/2023
+	; IN:			ECX: # of bytes read
+	; RETURNS:		Nothing
+	; MODIFIES:		DumpLin
+	; CALL:			DumpChar
+	; DESCRIPTION:	For each byte in Buffer put the byte in al and
+	;				the matching DumpLin position based on current index
+	ScanBuffer:
+
+			push esi
+			push edx
+			push eax
+			push edi
+
+			mov esi, ecx
+			xor eax, eax
+			xor ecx, ecx
+
+		.loop:
+			mov edx, ecx
+			shl edx, 1
+			add edx, ecx
+
+			mov al, [Buffer + ecx]
+			lea edi, [DumpLin + edx]
+
+			call DumpByte
+
+			inc ecx
+			cmp ecx, esi
+			jnz .loop
+
+			pop edi
+			pop eax
+			pop edx
+			pop esi
+
+			ret
+
 
 	; DumpAll:		Set to zero representation the whole DumpLin string
 	; UPDATED:		14/09/2023
@@ -153,7 +194,12 @@ _start:
 
 	nop
 
-		call DumpAll
+		call LoadBuf
+		cmp ebp, 0
+		jz Exit
+
+		mov ecx, ebp
+		call ScanBuffer
 
 		mov eax, 4
 		mov ebx, 1
