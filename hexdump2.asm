@@ -207,6 +207,8 @@ _start:
 		mov edx, DUMPLEN
 		int 80h
 
+		jmp _start
+
 
 Exit:	mov eax, 1		; sys_exit
 		mov ebx, 0		; exit with value 0
